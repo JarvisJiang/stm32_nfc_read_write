@@ -34,14 +34,17 @@
 #include "stm32f10x.h"
 extern Uid g_uid;
 void formatValueBlock_s50(unsigned char blockAddr);
+unsigned char g_get_sdata[48];
+unsigned char g_set_sdata[48];
 void test_mifare_s50(PICC_Type piccType) {
 	// In this sample we use the second sector,
     // that is: sector #1, covering block #4 up to and including block #7
 //    unsigned char sector         = 1;
 
 
-    unsigned char trailerBlock   = 7;
-    StatusCode status;
+//    unsigned char trailerBlock   = 7;
+//    StatusCode status;
+
   //  unsigned char buffer[18];
 
 		unsigned char  i;
@@ -55,57 +58,43 @@ void test_mifare_s50(PICC_Type piccType) {
     // Look for new cards
 	while(1)
 	{
-//		if ( !PICC_IsNewCardPresent())
-//		{
-//			continue;
-//		}
-//			
-
-//		// Select one of the cards
-//		if ( !PICC_ReadCardSerial())
-//		{
-//			continue;
-//		}
-			
 
 		for ( i = 0; i < 6; i++) {
 		key.keyByte[i] = 0xFF;
 		}
 
-//		// Check for compatibility
-//		if ( piccType != PICC_TYPE_MIFARE_MINI
-//		&&  piccType != PICC_TYPE_MIFARE_1K
-//		&&  piccType != PICC_TYPE_MIFARE_4K) 
-//		{
-//		printf("This sample only works with MIFARE Classic cards.\r\n");
-//		return;
-//		}
-
-
-
-		// Authenticate using key A
-
-//		for(trailerBlock =0; trailerBlock<16; trailerBlock++)
-//		{
-//			PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, trailerBlock, &key, &(g_uid));
-//			if (status != STATUS_OK) {
-//    		printf("PCD_Authenticate  failed  block%d: \r\n",trailerBlock);
-//	
-//	//		GetStatusCodeName(status);
-//		//	return;
-//		}
-
-
-
 		// Show the whole sector as it currently is
-		printf("Current data in sector:\r\n");
-		for(sector = 0; sector < 16; sector++)
-		PICC_DumpMifareClassicSectorToSerial(&(g_uid), &key, sector);
-		printf("\r\n");
-		
+	printf("Current data in sector:\r\n");
+//	PICC_DumpMifareClassicSectorToSerial(&(g_uid), &key, sector);
+		for(i = 0 ; i < 48 ; i++)
+		{
+			g_set_sdata[i] = 0xa5;
+		}
+		printf("PICC_WriteMifareClassicSector\r\n");
+		for(sector = 4; sector < 16; sector++)// start should be 4
+		{
+			PICC_WriteMifareClassicSector(&(g_uid),&key,sector,g_set_sdata);
+		}
+		printf("test :PICC_ReadMifareClassicSector\r\n");
+		for(sector = 4; sector < 16; sector++)
+		{
+		PICC_ReadMifareClassicSector(&(g_uid),&key,sector,g_get_sdata);
+
+			printf("sector:%d\r\n",sector);
+			for(i = 0; i<48; i++)
+			{
+				if(0==i%16)
+				{
+					printf("\r\nblock %d: ",i/16);
+				}
+				printf("%x ",g_get_sdata[i]);
+				
+			}
+			
+			printf("\r\n");
+		}
 		return;
-//		for(i = 4; i < 8; i++)
-//    formatValueBlock_s50(i);
+
 	}
     
 }

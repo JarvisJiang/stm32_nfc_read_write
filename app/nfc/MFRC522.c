@@ -1077,13 +1077,13 @@ StatusCode MIFARE_Write(	unsigned char blockAddr, ///< MIFARE Classic: The block
 	if (result != STATUS_OK) {
 		return result;
 	}
-	
+
 	// Step 2: Transfer the data
 	result = PCD_MIFARE_Transceive(buffer, bufferSize,0); // Adds CRC_A and checks that the response is MF_ACK.
 	if (result != STATUS_OK) {
 		return result;
 	}
-	
+
 	return STATUS_OK;
 } // End MIFARE_Write()
 
@@ -1339,27 +1339,33 @@ StatusCode PCD_MIFARE_Transceive(	unsigned char *sendData,		///< Pointer to the 
 	
 	// Copy sendData[] to cmdBuffer[] and add CRC_A
 	memcpy(cmdBuffer, sendData, sendLen);
+
 	result = PCD_CalculateCRC(cmdBuffer, sendLen, &cmdBuffer[sendLen]);
 	if (result != STATUS_OK) { 
 		return result;
 	}
+
 	sendLen += 2;
 	
 
 	result = PCD_CommunicateWithPICC(PCD_Transceive, waitIRq, cmdBuffer, sendLen, cmdBuffer, &cmdBufferSize, &validBits,0,0);
+
 	if (acceptTimeout && result == STATUS_TIMEOUT) {
 		return STATUS_OK;
 	}
 	if (result != STATUS_OK) {
 		return result;
 	}
+
 	// The PICC must reply with a 4 bit ACK
 	if (cmdBufferSize != 1 || validBits != 4) {
 		return STATUS_ERROR;
 	}
+
 	if (cmdBuffer[0] != MF_ACK) {
 		return STATUS_MIFARE_NACK;
 	}
+
 	return STATUS_OK;
 } // End PCD_MIFARE_Transceive()
 
@@ -1756,6 +1762,114 @@ void PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to Uid struct
 	
 	return;
 } // End PICC_DumpMifareClassicSectorToSerial()
+/*
+3 * block
+3 * 16bytes = 48 bytes
+ */
+void PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
+								  MIFARE_Key *key,	///< Key A for the sector.
+								  unsigned char sector,			///< The sector to dump, 0..39.
+								  unsigned char	*rbuf ) {
+	StatusCode status;
+	unsigned char firstBlock;		// Address of lowest address to dump actually last block dumped)
+	unsigned char no_of_blocks;		// Number of blocks in sector
+	unsigned char  byteCount,blockAddr;
+	unsigned char  buffer[18];
+	// Determine position and size of sector.
+	if (sector < 32) { // Sectors 0..31 has 4 blocks each
+		no_of_blocks = 4;
+		firstBlock = sector * no_of_blocks;
+	}
+	else if (sector < 40) { // Sectors 32-39 has 16 blocks each
+		no_of_blocks = 16;
+		firstBlock = 128 + (sector - 32) * no_of_blocks;
+	}
+	else { // Illegal input, no MIFARE Classic PICC has more than 40 sectors.
+		return;
+	}		
+	// Dump blocks, highest address first.
+	printf("firstblock = %d\r\n",firstBlock);
+	status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, firstBlock, key, uid);
+	if (status != STATUS_OK) {
+		printf("PCD_Authenticate() failed: ");
+		GetStatusCodeName(status);
+		return;
+	}
+
+		byteCount = sizeof(buffer);
+	/*
+	read front 3 sector
+	 */
+	for(blockAddr=firstBlock;blockAddr<(firstBlock+3);blockAddr++)	
+	{
+		status = MIFARE_Read(blockAddr, buffer, &byteCount);
+		if (status != STATUS_OK) {
+			printf("MIFARE_Read() failed: ");
+			GetStatusCodeName(status);
+			return;
+		}
+		memcpy(rbuf,buffer,16);
+		rbuf +=16;
+	}
+
+			
+	return;
+} 
+
+/*
+the size of wbuf  must larger than 48bytes 
+ */
+
+void PICC_WriteMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
+									MIFARE_Key *key,	///< Key A for the sector.
+									unsigned char sector,			///< The sector to dump, 0..39.
+									unsigned char *wbuf	)
+{
+	StatusCode status;
+	unsigned char firstBlock;		// Address of lowest address to dump actually last block dumped)
+	unsigned char no_of_blocks;		// Number of blocks in sector
+//	unsigned char  byteCount;
+	unsigned char  buffer[18];
+	unsigned char  blockAddr;
+	if (sector < 32) { // Sectors 0..31 has 4 blocks each
+		no_of_blocks = 4;
+		firstBlock = sector * no_of_blocks;
+	}
+	else if (sector < 40) { // Sectors 32-39 has 16 blocks each
+		no_of_blocks = 16;
+		firstBlock = 128 + (sector - 32) * no_of_blocks;
+	}
+	else { // Illegal input, no MIFARE Classic PICC has more than 40 sectors.
+		
+		return;
+	}
+	status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, firstBlock, key, uid);
+	if (status != STATUS_OK) {
+		printf("PCD_Authenticate() failed: ");
+		GetStatusCodeName(status);
+		return;
+	}
+
+
+	
+	for(blockAddr=firstBlock;blockAddr<(firstBlock+3);blockAddr++)	
+	{
+		memcpy(buffer,wbuf,16);
+		if(blockAddr%4==3)
+		{
+			printf("ERR:operate key block\r\n");
+			return;// forbidden operate key block
+		}
+		status = MIFARE_Write(blockAddr, buffer, 16);//be  careful
+		if (status != STATUS_OK) {
+			printf("PICC_WriteMifareClassicSector() failed: ");
+			GetStatusCodeName(status);
+			return;
+		}		
+	}
+
+	return;
+} 
 
 /**
  * Dumps memory contents of a MIFARE Ultralight PICC.
