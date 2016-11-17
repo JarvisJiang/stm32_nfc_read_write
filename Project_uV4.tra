@@ -1,0 +1,20 @@
+*** Creating Trace Output File 'Project_uV4.tra' Ok.
+### Preparing for ADS-LD.
+### Creating ADS-LD Command Line
+### List of Objects: adding '"stm32f10x.o"'
+### List of Objects: adding '"main.o"'
+### ADS-LD Command completed:
+--cpu Cortex-M3 "stm32f10x.o" "main.o" --strict --scatter "Project_uV4.sct" 
+--autoat --summary_stderr --info summarysizes --map --xref --callgraph --symbols 
+--info sizes --info totals --info unused --info veneers 
+ --list ".\Project_uV4.map" -o "Project_uV4.axf"### Preparing Environment (PrepEnvAds)
+### ADS-LD Output File: 'Project_uV4.axf'
+### ADS-LD Command File: 'Project_uV4.lnp'
+### Checking for dirty Components...
+### Creating CmdFile 'Project_uV4.lnp', Handle=0x00000278
+### Writing '.lnp' file
+### ADS-LD Command file 'Project_uV4.lnp' is ready.
+### ADS-LD: About to start ADS-LD Thread.
+### ADS-LD: executed with 0 errors
+### Updating obj list
+### LDADS_file() completed.

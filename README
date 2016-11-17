@@ -1,0 +1,4 @@
+1. connect mfrc522  nfc 
+
+2. use spi or iic by define NFC_IIC value
+
