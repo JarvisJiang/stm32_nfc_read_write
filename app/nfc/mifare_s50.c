@@ -55,17 +55,33 @@ void test_mifare_s50(PICC_Type piccType) {
 	}
 	while(1)
 	{
+		mifare_s50_data_operate(RC522_READ_NFC_CMD,g_nfc_testdata,512);
 
-		
-#if 0		
 		for(i = 0 ; i < 512; i++)
 		{
-			g_nfc_testdata[i] = data;
-			data+=4;
+		if(i%16==0)
+		{
+		printf("\r\nblock %d:\r\n",i/16);
 		}
+		printf(" [%d]:%x ",i, g_nfc_testdata[i]);
+
+		}
+		while(1);
+//		for(i = 0 ; i<16; i ++)
+//		PICC_DumpMifareClassicSectorToSerial(&(g_uid), &key, i);
+//		printf("*****************************************************\r\n");
+//		while(1);
+#if 1	
+//		for(i = 0 ; i < 256; i++)
+//		{
+//			g_nfc_testdata[i] = i;
+//			data+=4;
+//		}
 //		mifare_s50_data_operate(RC522_WRITE_NFC_CMD,g_nfc_testdata,512);
-//		
-		printf("*****************************************************\r\n");
+////		
+//		printf("Current data in sector:\r\n");
+		while(1);
+
 		memset(g_nfc_testdata,0,512);
 		mifare_s50_data_operate(RC522_READ_NFC_CMD,g_nfc_testdata,512);
 
@@ -81,23 +97,10 @@ void test_mifare_s50(PICC_Type piccType) {
 //		while(1);
 		return;
 		
-		mifare_s50_data_operate(RC522_WRITE_NFC_CMD,g_nfc_testdata,512);
 
-		for(i = 0 ; i < 512; i++)
-		{
-			if(i%16==0)
-			{
-				printf("\r\nblock %d:\r\n",i/16);
-			}
-			printf(" %x ", g_nfc_testdata[i]);
-			
-		}
-		return;
 #else
 		// Show the whole sector as it currently is
-	printf("Current data in sector:\r\n");
-		for(i = 0 ; i ++; i<16)
-	PICC_DumpMifareClassicSectorToSerial(&(g_uid), &key, i);
+	
 //		for(i = 0 ; i < 48 ; i++)
 //		{
 //			g_set_sdata[i] = i;
@@ -126,18 +129,18 @@ void test_mifare_s50(PICC_Type piccType) {
 //			printf("\r\n");
 //		}
 //		memset(g_nfc_testdata,0,512);
-//		if(mifare_s50_data_operate(RC522_READ_NFC_CMD,g_nfc_testdata,512))
-//			printf("ERRO:mifare_s50_data_operate:RC522_READ_NFC_CMD\r\n ");
+		if(mifare_s50_data_operate(RC522_READ_NFC_CMD,g_nfc_testdata,512))
+			printf("ERRO:mifare_s50_data_operate:RC522_READ_NFC_CMD\r\n ");
 
-//		for(i = 0 ; i < 512; i++)
-//		{
-//			if(i%16==0)
-//			{
-//				printf("\r\nblock %d:\r\n",i/16);
-//			}
-//			printf(" %x ", g_nfc_testdata[i]);
-//			
-//		}
+		for(i = 0 ; i < 512; i++)
+		{
+			if(i%16==0)
+			{
+				printf("\r\nblock %d:\r\n",i/16);
+			}
+			printf(" %x ", g_nfc_testdata[i]);
+			
+		}
 
 		return;
 	#endif
@@ -260,15 +263,14 @@ char read_mifare_s50(unsigned char *buf, int len)
 				{
 					cpy_len = 48;
 				}
-				memcpy(buf,g_set_sdata,cpy_len);
+				memcpy(buf,g_get_sdata,cpy_len);
 				buf = buf + cpy_len;
 				total_bytes-=48;
 				if((total_bytes)<0)
 				{
 					break;
 				}
-				
-				
+			
 
 			}
 			printf("\r\n");
