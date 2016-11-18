@@ -359,8 +359,8 @@ typedef	enum _StatusCode {
 	void PICC_DumpMifareUltralightToSerial(void);
 	
 	
-	void PICC_ReadMifareClassicSector(Uid *uid,MIFARE_Key *key,unsigned char sector,unsigned char	*rbuf );
-	void PICC_WriteMifareClassicSector(Uid *uid,MIFARE_Key *key,unsigned char sector,unsigned char	*rbuf );
+	char PICC_ReadMifareClassicSector(Uid *uid,MIFARE_Key *key,unsigned char sector,unsigned char	*rbuf );
+	char PICC_WriteMifareClassicSector(Uid *uid,MIFARE_Key *key,unsigned char sector,unsigned char	*rbuf );
 	// Advanced functions for MIFARE
 	void MIFARE_SetAccessBits(unsigned char *accessBitBuffer, unsigned char g0, unsigned char g1, unsigned char g2, unsigned char g3);
 	unsigned char MIFARE_OpenUidBackdoor(unsigned char logErrors);
@@ -378,5 +378,12 @@ typedef	enum _StatusCode {
 //	byte _resetPowerDownPin;	// Arduino pin connected to MFRC522's reset and power down input (Pin 6, NRSTPD, active low)
 static	StatusCode MIFARE_TwoStepHelper(unsigned char command, unsigned char blockAddr, long data);
 
+
+#define  M_NFC_DEBUG 1
+#if M_NFC_DEBUG
+#define     NFC_DEBUG( fmt, ... )                printf ( fmt, ##__VA_ARGS__ )    
+#else
+#define     NFC_DEBUG( fmt, ... )
+#endif
 
 #endif

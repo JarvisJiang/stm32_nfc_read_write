@@ -98,6 +98,13 @@ char test_ntag21x(void) {
   delay_ms(200);
 }
 }
+/*
+
+
+*/
+
+
+
 void test_nfc(void)
 {
 	PICC_Type type;
@@ -168,6 +175,89 @@ void test_nfc(void)
 	
 	//test_ntag21x();
 }
+
+/*
+
+
+*/
+
+static unsigned char g_try_cnt = 0;
+PICC_Type nfc_scan(void)
+{
+	PICC_Type type;
+	unsigned char i;
+	unsigned char try_rtn = 0;
+	MFRC522_init();
+	printf("Scan PICC to see UID, type, and data blocks...\r\n");
+	//test_ntag21x();
+	while(1)
+	{
+
+		if(g_try_cnt>9)
+		{
+			
+			MFRC522_init();
+			printf("MFRC522_init\r\n");
+			
+			
+			PCD_AntennaOff();
+			delay_ms(200);
+			PCD_AntennaOn();
+			g_try_cnt = 0;
+			try_rtn++;
+			if(5==try_rtn)
+			{
+				return PICC_TYPE_UNKNOWN;
+			}
+		}
+		if( !PICC_IsNewCardPresent()){
+			printf("scaner erro\r\n");
+			g_try_cnt++;
+			continue;
+		}
+
+		//	delay_ms(58);
+		// Select one of the cards
+		if (!PICC_ReadCardSerial()) 
+		{
+			printf("read card serial erro\r\n");
+			g_try_cnt++;
+			continue;
+		}
+//	break;
+	
+		printf("uid:");
+		for(i = 0; i<10;i++)
+		{
+			printf("%x ",g_uid.uidByte[i]);
+		}
+		printf("sak=%x\r\n",g_uid.sak);
+		printf("\r\n");//sak
+		type = get_nfc_type(g_uid.sak);
+	
+	
+	
+		switch (type) {
+			
+			case PICC_TYPE_MIFARE_1K:		;
+												
+			case PICC_TYPE_MIFARE_4K:		test_mifare_s50(type);
+													g_try_cnt = 10;
+																break;	
+			case PICC_TYPE_MIFARE_UL:	test_ntag21x_read_write();
+													g_try_cnt = 10;
+											break;	
+			case PICC_TYPE_UNKNOWN:
+			default:						printf("can not read and write\r\n");
+											break;	
+		}
+		break;
+	}
+		return type;
+
+}
+
+
 unsigned char nfc_compare_buf(unsigned char *src,unsigned char *dst,unsigned char size)
 {
 	int i = 0;

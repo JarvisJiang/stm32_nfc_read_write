@@ -1766,7 +1766,7 @@ void PICC_DumpMifareClassicSectorToSerial(Uid *uid,			///< Pointer to Uid struct
 3 * block
 3 * 16bytes = 48 bytes
  */
-void PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
+char PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
 								  MIFARE_Key *key,	///< Key A for the sector.
 								  unsigned char sector,			///< The sector to dump, 0..39.
 								  unsigned char	*rbuf ) {
@@ -1785,7 +1785,7 @@ void PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returne
 		firstBlock = 128 + (sector - 32) * no_of_blocks;
 	}
 	else { // Illegal input, no MIFARE Classic PICC has more than 40 sectors.
-		return;
+		return 1;
 	}		
 	// Dump blocks, highest address first.
 	printf("firstblock = %d\r\n",firstBlock);
@@ -1793,7 +1793,7 @@ void PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returne
 	if (status != STATUS_OK) {
 		printf("PCD_Authenticate() failed: ");
 		GetStatusCodeName(status);
-		return;
+		return 1;
 	}
 
 		byteCount = sizeof(buffer);
@@ -1806,21 +1806,21 @@ void PICC_ReadMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returne
 		if (status != STATUS_OK) {
 			printf("MIFARE_Read() failed: ");
 			GetStatusCodeName(status);
-			return;
+			return 1;
 		}
 		memcpy(rbuf,buffer,16);
 		rbuf +=16;
 	}
 
 			
-	return;
+	return 0;
 } 
 
 /*
 the size of wbuf  must larger than 48bytes 
  */
 
-void PICC_WriteMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
+char PICC_WriteMifareClassicSector(Uid *uid,			///< Pointer to Uid struct returned from a successful PICC_Select().
 									MIFARE_Key *key,	///< Key A for the sector.
 									unsigned char sector,			///< The sector to dump, 0..39.
 									unsigned char *wbuf	)
@@ -1841,13 +1841,13 @@ void PICC_WriteMifareClassicSector(Uid *uid,			///< Pointer to Uid struct return
 	}
 	else { // Illegal input, no MIFARE Classic PICC has more than 40 sectors.
 		
-		return;
+		return 1;
 	}
 	status = PCD_Authenticate(PICC_CMD_MF_AUTH_KEY_A, firstBlock, key, uid);
 	if (status != STATUS_OK) {
 		printf("PCD_Authenticate() failed: ");
 		GetStatusCodeName(status);
-		return;
+		return 1;
 	}
 
 
@@ -1858,17 +1858,18 @@ void PICC_WriteMifareClassicSector(Uid *uid,			///< Pointer to Uid struct return
 		if(blockAddr%4==3)
 		{
 			printf("ERR:operate key block\r\n");
-			return;// forbidden operate key block
+			return 1;// forbidden operate key block
 		}
 		status = MIFARE_Write(blockAddr, buffer, 16);//be  careful
 		if (status != STATUS_OK) {
 			printf("PICC_WriteMifareClassicSector() failed: ");
 			GetStatusCodeName(status);
-			return;
-		}		
+			return 1;
+		}
+		 wbuf+=16;
 	}
 
-	return;
+	return 0;
 } 
 
 /**
