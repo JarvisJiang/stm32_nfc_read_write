@@ -33,17 +33,17 @@
 #include "stdio.h"
 #include "stm32f10x.h"
 #include "string.h"
+#include "mifare_s50.h"
 extern Uid g_uid;
 void formatValueBlock_s50(unsigned char blockAddr);
-unsigned char g_get_sdata[48];
-unsigned char g_set_sdata[48];
-unsigned char g_nfc_testdata[512];
-#define RC522_READ_NFC_CMD 0X88
-#define RC522_WRITE_NFC_CMD 0X98
+extern unsigned char g_get_sdata[48];
+extern unsigned char g_set_sdata[48];
+extern unsigned char g_nfc_testdata[512];
+
 #define NFC_MAX_DATA_LEN  512
 char write_mifare_s50(unsigned char *buf, int len);
 char read_mifare_s50(unsigned char *buf, int len);
-char mifare_s50_data_operate(char cmd,unsigned char *buf, int len) ;
+
 void test_mifare_s50(PICC_Type piccType) {
 
 	int  i;
@@ -148,134 +148,6 @@ void test_mifare_s50(PICC_Type piccType) {
     
 }
 
-
-char mifare_s50_data_operate(char cmd,unsigned char *buf, int len) {
-
-		unsigned char  i;
-
-
-
-		// Look for new cards
-		if(len>NFC_MAX_DATA_LEN)
-		{
-			NFC_DEBUG("data len too larger\r\n");
-			return 1;//
-		}
-
-		
-
-
-		// Show the whole sector as it currently is
-		printf("Current data in sector:\r\n");
-
-
-		if(RC522_READ_NFC_CMD==cmd)
-		{
-			return read_mifare_s50(buf,len);
-		}
-		else if(RC522_WRITE_NFC_CMD==cmd)
-		{
-			return write_mifare_s50(buf,len);
-		}
-		else
-		{
-			NFC_DEBUG("cmd error\r\n");
-		}
-		printf("\r\n");
-		
-		return 1;
-
-    
-}
-char write_mifare_s50(unsigned char *buf, int len)
-{
-			unsigned char  i;
-			unsigned char sector = 5;
-			int  total_bytes = len;
-			MIFARE_Key key;
-			int cpy_len;
-			char rtn = 0;
-			for ( i = 0; i < 6; i++) 
-			{
-				key.keyByte[i] = 0xFF;
-			}
-			for(sector = 1; sector < 16; sector++)// start should be 4
-			{
-				
-				if(total_bytes < 48)
-				{
-					memset(g_set_sdata,0,total_bytes);
-					cpy_len = total_bytes;
-				}
-				else
-				{
-					cpy_len = 48;
-				}
-				memcpy(g_set_sdata,buf,cpy_len);
-				buf +=cpy_len;
-				rtn =PICC_WriteMifareClassicSector(&(g_uid),&key,sector,g_set_sdata);
-				if(rtn)
-				{
-					NFC_DEBUG("ERR:write_mifare_s50\r\n");
-					return rtn;
-				}
-					
-				total_bytes-=48;
-				if((total_bytes)<0)
-				{
-					break;
-				}
-
-			}
-			return rtn;
-}
-
-
-char read_mifare_s50(unsigned char *buf, int len)
-{
-			unsigned char  i;
-			unsigned char sector = 5;
-			int  total_bytes = len;
-			MIFARE_Key key;
-			int cpy_len;
-			char rtn = 0;
-			for ( i = 0; i < 6; i++) 
-			{
-				key.keyByte[i] = 0xFF;
-			}
-			for(sector = 1; sector < 16; sector++)// start should be 4
-			{
-
-				
-			
-				rtn =PICC_ReadMifareClassicSector(&(g_uid),&key,sector,g_get_sdata);
-				if(rtn)
-				{
-					NFC_DEBUG("ERR:read_mifare_s50\r\n");
-					return rtn;
-				}
-					
-				if(total_bytes < 48)
-				{
-					cpy_len = total_bytes;		
-				}
-				else
-				{
-					cpy_len = 48;
-				}
-				memcpy(buf,g_get_sdata,cpy_len);
-				buf = buf + cpy_len;
-				total_bytes-=48;
-				if((total_bytes)<0)
-				{
-					break;
-				}
-			
-
-			}
-			printf("\r\n");
-			return rtn;
-}
 /**
  * Helper routine to dump a byte array as hex values to Serial.
  */

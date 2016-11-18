@@ -385,5 +385,6 @@ static	StatusCode MIFARE_TwoStepHelper(unsigned char command, unsigned char bloc
 #else
 #define     NFC_DEBUG( fmt, ... )
 #endif
-
+#define RC522_READ_NFC_CMD 0X88
+#define RC522_WRITE_NFC_CMD 0X98
 #endif

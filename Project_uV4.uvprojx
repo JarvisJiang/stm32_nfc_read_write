@@ -475,6 +475,11 @@
               <FileType>1</FileType>
               <FilePath>.\app\nfc\mifare_s50.c</FilePath>
             </File>
+            <File>
+              <FileName>nfc_api.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\app\nfc\nfc_api.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

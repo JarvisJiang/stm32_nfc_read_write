@@ -19,7 +19,7 @@
 
 #if NFC_IIC
 
-
+unsigned char volatile g_rc522_iic_addr;
 static void delay_us(unsigned int nus)
 {
 	  int  i = 0; 
@@ -314,7 +314,7 @@ static void RC522_WR_Reg(u8 RCsla,u8 addr,u8 val)
 u8 IIC_R_RC522(u8 DZ)
 {						   
 	u8 DAT=0;	
-    DAT = RC522_RD_Reg(SLA_ADDR,  DZ);
+    DAT = RC522_RD_Reg(g_rc522_iic_addr,  DZ);
 	return DAT;          		//¡¤¦Ì??¨º?¦Ì?¦Ì?¨ºy?Y
 }
 
@@ -324,7 +324,7 @@ u8 IIC_R_RC522(u8 DZ)
 
 void IIC_W_RC522(u8 DZ,u8 DATA)
 {
-    RC522_WR_Reg(SLA_ADDR,  DZ, DATA);
+    RC522_WR_Reg(g_rc522_iic_addr,  DZ, DATA);
 }
 
 
@@ -334,7 +334,7 @@ void IIC_W_N_RC522(unsigned char reg,		///< The register to write to. One of the
 {
 		u8 index;
 		IIC_Start();  				 
-		IIC_Send_Byte(SLA_ADDR);     	//¡¤¡é?¨ªD¡ä?¡Â?t??¨¢?	 
+		IIC_Send_Byte(g_rc522_iic_addr);     	//¡¤¡é?¨ªD¡ä?¡Â?t??¨¢?	 
 		IIC_Wait_Ack();	   
 
 		IIC_Send_Byte(reg);   			//¡¤¡é?¨ª??¡ä??¡Â¦Ì??¡¤
@@ -354,12 +354,12 @@ void IIC_R_N_RC522(unsigned char reg,		///< The register to write to. One of the
 		u8 index;
 
 		IIC_Start();  				 
-		IIC_Send_Byte(SLA_ADDR);	//¡¤¡é?¨ªD¡ä?¡Â?t??¨¢?	 
+		IIC_Send_Byte(g_rc522_iic_addr);	//¡¤¡é?¨ªD¡ä?¡Â?t??¨¢?	 
 		IIC_Wait_Ack();	   
 		IIC_Send_Byte(reg);   		//¡¤¡é?¨ª??¡ä??¡Â¦Ì??¡¤
 		IIC_Wait_Ack(); 	 										  		   
 		IIC_Start();  	 	   		//??D????¡¥
-		IIC_Send_Byte(SLA_ADDR+1);	//¡¤¡é?¨ª?¨¢?¡Â?t??¨¢?	 
+		IIC_Send_Byte(g_rc522_iic_addr+1);	//¡¤¡é?¨ª?¨¢?¡Â?t??¨¢?	 
 		IIC_Wait_Ack();
 		for (index = 0; index < count; index++)
 		{

@@ -4,6 +4,13 @@
 #include <stdio.h>
 #include <MFRC522.h>
 extern Uid g_uid;
+
+
+unsigned char g_get_sdata[48];
+unsigned char g_set_sdata[48];
+unsigned char g_nfc_testdata[512];
+
+#define NFC_MAX_DATA_LEN  512
 void test_mifare_s50(PICC_Type piccType);
 /*******************************
 *连线说明：
@@ -347,6 +354,217 @@ void test_ntag21x_read_write(void) {
 	
 } // End PICC_DumpMifareUltralightToSerial()
 
+char ntag21x_write_data(unsigned char *buf, int len);
+char ntag21x_read_data(unsigned char *buf, int len);
+char ntag21x_data_operate(char cmd,unsigned char *buf, int len);
+char ntag21x_data_operate(char cmd,unsigned char *buf, int len) {
+
+		if(RC522_READ_NFC_CMD==cmd)
+		{
+			return ntag21x_read_data(buf,len);
+		}
+		else if(RC522_WRITE_NFC_CMD==cmd)
+		{
+			return ntag21x_write_data(buf,len);
+		}
+		else
+		{
+			NFC_DEBUG("cmd error\r\n");
+		}
+		printf("\r\n");
+		
+		return 0;
+
+
+	
+}
+char ntag21x_write_data(unsigned char *buf, int len)
+{
+	StatusCode status;
+	unsigned char  wrt_byte_cnt,wrt_page_cnt;
+	unsigned char page_total;
+	page_total = len/4 + 1;
+	// Try the mpages of the original Ultralight. Ultralight C has more pages.
+	
+		// Read pages
+
+	for(wrt_byte_cnt=0,wrt_page_cnt =4;wrt_page_cnt<page_total;wrt_page_cnt++)//888byte
+	{
+		status = MIFARE_Ultralight_Write(wrt_page_cnt,&buf[wrt_byte_cnt],4);
+		if (status != STATUS_OK) {
+		printf("MIFARE_Write(page=%d) failed:  ",wrt_page_cnt);
+		GetStatusCodeName(status);
+		
+		return 1;
+		//break;
+		}		
+			wrt_byte_cnt+=4;
+	}
+	return 0;
+}
+
+char ntag21x_read_data(unsigned char *buf, int len)
+{
+	StatusCode status;	
+	unsigned char  rdt_byte_cnt,rdt_page_cnt;
+	unsigned char page_total;
+	unsigned char low_len = 18;
+	page_total = len/4 + 1;
+	// Try the mpages of the original Ultralight. Ultralight C has more pages.
+	
+		// Read pages
+
+	for(rdt_byte_cnt=0,rdt_page_cnt =4;rdt_page_cnt<page_total;rdt_page_cnt++)//888byte
+	{
+		status = MIFARE_Read(rdt_page_cnt,&buf[rdt_byte_cnt],&low_len);
+		if (status != STATUS_OK) {
+		printf("MIFARE_Write(page=%d) failed:  ",rdt_page_cnt);
+		GetStatusCodeName(status);
+	
+		return 1;
+		//break;
+		}		
+		rdt_byte_cnt+=4;
+	}
+	return 0;
+}
+
+
+
+
+char write_mifare_s50(unsigned char *buf, int len);
+char read_mifare_s50(unsigned char *buf, int len);
+char mifare_s50_data_operate(char cmd,unsigned char *buf, int len) {
+
+		unsigned char  i;
+
+
+
+		// Look for new cards
+		if(len>NFC_MAX_DATA_LEN)
+		{
+			NFC_DEBUG("data len too larger\r\n");
+			return 1;//
+		}
+
+		
+
+
+		// Show the whole sector as it currently is
+		printf("mi3333333e_s50_data_operate:\r\n");
+	printf("len =%d\r\n",len);
+
+		if(RC522_READ_NFC_CMD==cmd)
+		{
+			return read_mifare_s50(buf,len);
+		}
+		else if(RC522_WRITE_NFC_CMD==cmd)
+		{
+			return write_mifare_s50(buf,len);
+		}
+		else
+		{
+			NFC_DEBUG("cmd error\r\n");
+		}
+		printf("\r\n");
+		
+		return 0;
+
+    
+}
+char write_mifare_s50(unsigned char *buf, int len)
+{
+			unsigned char  i;
+			unsigned char sector = 5;
+			int  total_bytes = len;
+			MIFARE_Key key;
+			int cpy_len;
+			unsigned char total_sec = len /16 +1;
+			char rtn = 0;
+			for ( i = 0; i < 6; i++) 
+			{
+				key.keyByte[i] = 0xFF;
+			}
+			for(sector = 1; 0 < total_bytes; total_bytes-=48)// start should be 4
+			{
+				
+				if(total_bytes < 48)
+				{
+					memset(g_set_sdata,0,total_bytes);
+					cpy_len = total_bytes;
+				}
+				else
+				{
+					cpy_len = 48;
+				}
+				memcpy(g_set_sdata,buf,cpy_len);
+				buf +=cpy_len;
+				rtn =PICC_WriteMifareClassicSector(&(g_uid),&key,sector,g_set_sdata);
+				if(rtn)
+				{
+					NFC_DEBUG("ERR:write_mifare_s50\r\n");
+					return rtn;
+				}
+					
+				sector++;
+				if((total_bytes)<0)
+				{
+					break;
+				}
+
+			}
+			return rtn;
+}
+
+
+char read_mifare_s50(unsigned char *buf, int len)
+{
+			unsigned char  i;
+			unsigned char sector = 5;
+			int  total_bytes = len;
+			MIFARE_Key key;
+			int cpy_len;
+			char rtn = 0;
+			unsigned char total_sec = len /48+1;
+			unsigned char byte_counter = 0;
+			for ( i = 0; i < 6; i++) 
+			{
+				key.keyByte[i] = 0xFF;
+			}
+			printf("total_sec = %d , len =%d\r\n",total_sec,len);
+			for(sector = 1; 0 < total_bytes; total_bytes-=48)// start should be 4
+			{
+
+				
+			
+				rtn =PICC_ReadMifareClassicSector(&(g_uid),&key,sector,g_get_sdata);
+				if(rtn)
+				{
+					NFC_DEBUG("ERR:read_mifare_s50\r\n");
+					return rtn;
+				}
+					
+				if(total_bytes < 48)
+				{
+					cpy_len = total_bytes;		
+				}
+				else
+				{
+					cpy_len = 48;
+				}
+				memcpy(buf,g_get_sdata,cpy_len);
+				buf = buf + cpy_len;
+				sector++;
+//				if((total_bytes)<0)
+//				{
+//					break;
+//				}
+			
+
+			}
+			printf("\r\n");
+			return rtn;
+}
 /*
 CT  = 0X88
 CT 	^ SN0 ^ SN1 ^ SN2 = CHECK BYTE 1
@@ -372,3 +590,4 @@ PICC_Type get_nfc_type(unsigned char ack)
 	
 	return type;
 }
+

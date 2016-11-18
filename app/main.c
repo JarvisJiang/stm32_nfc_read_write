@@ -30,7 +30,7 @@
 #include <string.h>
 #include <stdio.h>
 
-
+void test_nfc_api(void);
 void USARTx_Config(void);
 void test_nfc(void);
 int main(void)
@@ -39,9 +39,10 @@ int main(void)
 
   USARTx_Config ();                                                          
 
-	printf ( "\r\n nfc iic  ntag21x M1 S50\r\n" );                          
-	
-	test_nfc();
+	printf ( "\r\n nfc iic  cccccntag21x M1 S50\r\n" );                          
+	test_nfc_api();
+	printf("0ver&&&&&&&&&&&&&&&&&&&\r\n");
+//	test_nfc();
 
 }
 
