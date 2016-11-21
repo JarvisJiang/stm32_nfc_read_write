@@ -29,23 +29,33 @@ char get_nfc_connent(unsigned char addr, unsigned char *nfc_connent, int size)
 {
 		PICC_Type piccType;
 		char rtn;
+	  char try_cnt = 0;
 		g_rc522_iic_addr = addr;
-	  piccType = nfc_scan();
-		printf("get_nfc_connent:%d\r\n",size);
-		switch (piccType) {
 
-		case PICC_TYPE_MIFARE_1K:		;
-											
-		case PICC_TYPE_MIFARE_4K:
-											rtn =	mifare_s50_data_operate(RC522_READ_NFC_CMD,nfc_connent,size);
-															break;	
-		case PICC_TYPE_MIFARE_UL:
-											rtn =	ntag21x_data_operate(RC522_READ_NFC_CMD,nfc_connent,size);
-										break;	
-		case PICC_TYPE_UNKNOWN:
-		default:						printf("can not read and write\r\n");
-										rtn = 1;//fail	
+		while(1)
+		{
+			piccType = nfc_scan();
+			printf("get_nfc_connent:%d\r\n",size);
+			switch (piccType) 
+				{
+
+				case PICC_TYPE_MIFARE_1K:		;
+													
+				case PICC_TYPE_MIFARE_4K:
+													rtn =	mifare_s50_data_operate(RC522_READ_NFC_CMD,nfc_connent,size);
+																	break;	
+				case PICC_TYPE_MIFARE_UL:
+													rtn =	ntag21x_data_operate(RC522_READ_NFC_CMD,nfc_connent,size);
+												break;	
+				case PICC_TYPE_UNKNOWN:
+				default:						printf("can not read and write\r\n");
+												rtn = 1;//fail	
+				}
+				try_cnt++;
+				if(try_cnt>5||(0==rtn))
+					break;
 		}
+	  
 		return rtn;
 }
 
@@ -56,28 +66,40 @@ char set_nfc_connent(unsigned char addr, unsigned char *nfc_connent, int size)
 {
 		PICC_Type piccType;
 		char rtn;
+		char try_cnt = 0;
 		g_rc522_iic_addr = addr;
-	  piccType = nfc_scan();
-		printf("%s  SIZE =%d\r\n", __FUNCTION__,size);
-		switch (piccType) 
+	  
+		while(1)
 		{
+			piccType = nfc_scan();
+			printf("%s  SIZE =%d\r\n", __FUNCTION__,size);
+			switch (piccType) 
+			{
 
-		case PICC_TYPE_MIFARE_1K:		;
-											
-		case PICC_TYPE_MIFARE_4K:
-											rtn =	mifare_s50_data_operate(RC522_WRITE_NFC_CMD,nfc_connent,size);
-															break;	
-		case PICC_TYPE_MIFARE_UL:
-											rtn =	ntag21x_data_operate(RC522_WRITE_NFC_CMD,nfc_connent,size);
-										break;	
-		case PICC_TYPE_UNKNOWN:
-		default:						printf("can not read and write\r\n");
-										rtn = 1;//fail	
+				case PICC_TYPE_MIFARE_1K:		;
+					
+				case PICC_TYPE_MIFARE_4K:
+						 rtn =	mifare_s50_data_operate(RC522_WRITE_NFC_CMD,nfc_connent,size);
+									break;	
+				case PICC_TYPE_MIFARE_UL:
+						 rtn =	ntag21x_data_operate(RC522_WRITE_NFC_CMD,nfc_connent,size);
+				break;	
+				case PICC_TYPE_UNKNOWN:
+				default:						printf("can not read and write\r\n");
+				rtn = 1;//fail	
+				try_cnt++;
+				if(try_cnt>5)
+					break;
+			}	
+			try_cnt++;
+			if(try_cnt>5||(0==rtn))
+				break;
 		}
+		
 		return rtn;
 }
-	unsigned char rbuf[512];
-	unsigned char wbuf[512];
+unsigned char rbuf[512];
+unsigned char wbuf[512];
 void test_nfc_api(void)
 {	
 
@@ -94,16 +116,16 @@ void test_nfc_api(void)
 	  cnt = 0;
 	 while(1)
 	 {
-		 printf("\r\nstart test nfc__ rc522_iic_addr:%x\r\n",iic_addr);
+		 printf("\r\ntest_nfc_api*******************************:%x\r\n",iic_addr);
 		
 		 cnt++;
-  	 delay_ms(20);
+//  	 delay_ms(20);
 //		 NFC_DEBUG("cnt = %d\r\n",cnt);
-//			for(i = 0; i < 128; i++)
+//			for(i = 0; i < 132; i++)
 //			{
-//			wbuf[i] = 0x4e;
+//			wbuf[i] = 0x5a;
 //			}
-//		 if(set_nfc_connent(iic_addr,wbuf,128))
+//		 if(set_nfc_connent(iic_addr,wbuf,131))
 //		 {
 //			 NFC_DEBUG("ERR:set_nfc_connent \r\n");
 //			 continue;
@@ -118,7 +140,7 @@ void test_nfc_api(void)
 		 printf("\r\n*****************success******************\r\n");
 		 printf("\r\n*****************success******************\r\n");
 		 printf("\r\n*****************success******************rc522_iic_addr:%x\r\n",g_rc522_iic_addr);
-			for(i = 0; i < 512; i++)
+			for(i = 0; i < 132; i++)
 			{
 			NFC_DEBUG("RBUF[%d] =%x\r\n",i ,rbuf[i]);
 			}
